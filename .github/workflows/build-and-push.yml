@@ -1,0 +1,68 @@
+name: build-and-push
+
+# Builds the container image and pushes it to ECR using OIDC (no static keys).
+# The ECR push raises an EventBridge event that starts the CodePipeline
+# blue/green deployment. The deploy bundle (appspec.yaml + taskdef.json) is
+# uploaded to S3 first so the pipeline always reads the matching config.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "client/**"
+      - "server/**"
+      - "Dockerfile"
+      - "deploy/**"
+      - ".github/workflows/build-and-push.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+  ARTIFACTS_BUCKET: ${{ vars.ARTIFACTS_BUCKET }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          IMAGE="${REGISTRY}/${ECR_REPOSITORY}"
+          docker build -t "${IMAGE}:${GITHUB_SHA}" -t "${IMAGE}:latest" .
+          echo "IMAGE=${IMAGE}" >> "$GITHUB_ENV"
+
+      - name: Prepare and upload deploy bundle
+        run: |
+          mkdir -p bundle
+          cp deploy/appspec.yaml bundle/appspec.yaml
+          sed -e "s/<ACCOUNT_ID>/${AWS_ACCOUNT_ID}/g" \
+              -e "s/<AWS_REGION>/${AWS_REGION}/g" \
+              deploy/taskdef.json > bundle/taskdef.json
+          ( cd bundle && zip -r ../config-source.zip appspec.yaml taskdef.json )
+          aws s3 cp config-source.zip "s3://${ARTIFACTS_BUCKET}/config/config-source.zip"
+
+      - name: Push image to ECR
+        run: |
+          docker push "${IMAGE}:${GITHUB_SHA}"
+          docker push "${IMAGE}:latest"
+          echo "Pushed ${IMAGE}:${GITHUB_SHA} and :latest"

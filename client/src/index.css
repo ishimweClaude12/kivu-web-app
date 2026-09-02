@@ -1,0 +1,79 @@
+:root {
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, #1b3a5b 0%, transparent 60%),
+    radial-gradient(1000px 500px at 100% 120%, #0f5132 0%, transparent 55%),
+    #0b1220;
+  color: #e6edf3;
+  padding: 24px;
+}
+
+.card {
+  width: min(560px, 92vw);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 44px 40px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7ee2a8;
+  border: 1px solid rgba(126, 226, 168, 0.35);
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-bottom: 22px;
+}
+
+.name {
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lab {
+  margin-top: 10px;
+  font-size: clamp(15px, 3.4vw, 19px);
+  color: #9fb0c3;
+}
+
+.divider {
+  height: 1px;
+  margin: 26px auto;
+  width: 70%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+}
+
+.meta {
+  font-size: 14px;
+  color: #8697a9;
+  line-height: 1.6;
+}
+
+.footer {
+  font-size: 12.5px;
+  color: #5f7085;
+  letter-spacing: 0.02em;
+}
